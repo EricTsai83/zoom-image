@@ -1,101 +1,75 @@
-import Image from "next/image";
+"use client";
+import { useState, useRef } from "react";
 
-export default function Home() {
+function ImageZoom() {
+  const [zoomStyles, setZoomStyles] = useState({
+    opacity: 0,
+    zoomX: "50%",
+    zoomY: "50%",
+    transformX: 0,
+    transformY: 0,
+  });
+
+  const containerRef = useRef<HTMLDivElement>(null);
+  const imgZoomRef = useRef<HTMLImageElement>(null);
+
+  function handleMouseMove(
+    event: React.MouseEvent<HTMLDivElement, MouseEvent>,
+  ) {
+    if (containerRef.current) {
+      // 找到 container 的位置資訊
+      const containerRect = containerRef.current.getBoundingClientRect();
+      // 根據滑鼠在瀏覽器上的位置減去container的位置得出滑鼠在container 上的位置
+      const positionPx = event.clientX - containerRect.left;
+      // 將位置轉化成百分比來代表
+      const positionX = (positionPx / containerRect.width) * 100;
+
+      const positionPy = event.clientY - containerRect.top;
+      const positionY = (positionPy / containerRect.height) * 100;
+      // 因為這裡的設計是會隱藏一個 scale 1.5 的圖片，當 user 將滑鼠指到原圖片的中心點時，positionX會是50，隱藏的圖片不需位移，但當滑鼠移動要中心點右側時，positionX會大於50，所以需要將被隱藏的圖片往左移動，這樣滑鼠指到的地方才會跟原圖片的位置一樣。而3.5 是偏移係數，可以透過放大縮小，來讓隱藏圖片顯示的位置跟原圖被指到的位置一致。
+      const transformX = -(positionX - 50) / 3.5;
+      const transformY = -(positionY - 50) / 3.5;
+
+      setZoomStyles({
+        opacity: 1,
+        zoomX: `${positionX}%`,
+        zoomY: `${positionY}%`,
+        transformX,
+        transformY,
+      });
+    }
+  }
+
+  function handleMouseOut() {
+    setZoomStyles((prevStyles) => ({
+      ...prevStyles,
+      opacity: 0,
+    }));
+  }
+
   return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="https://nextjs.org/icons/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
+    <div className="flex justify-center items-center h-screen w-screen">
+      <div
+        ref={containerRef}
+        className="relative w-max"
+        onMouseMove={handleMouseMove}
+        onMouseOut={handleMouseOut}
+      >
+        <img src="image.jpg" alt="Main" className="w-[500px]" />
+        <img
+          ref={imgZoomRef}
+          src="image.jpg"
+          alt="Zoomed"
+          className="absolute left-0 top-0 pointer-events-none"
+          style={{
+            opacity: zoomStyles.opacity,
+            transform: `scale(1.5) translate(${zoomStyles.transformX}%, ${zoomStyles.transformY}%)`,
+            clipPath: `circle(100px at ${zoomStyles.zoomX} ${zoomStyles.zoomY})`,
+          }}
         />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
-
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="https://nextjs.org/icons/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
-        </div>
-      </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+      </div>
     </div>
   );
 }
+
+export default ImageZoom;
